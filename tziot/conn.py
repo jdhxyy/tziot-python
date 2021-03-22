@@ -15,6 +15,11 @@ import lagan
 import threading
 import time
 
+# 最大连接次数.超过连接次数这回清除父路由IA地址,重连父路由
+_CONN_NUM_MAX = 3
+
+_conn_num = 0
+
 
 def init():
     knock.register(utz.HEADER_CMP, utz.CMP_MSG_TYPE_ACK_CONNECT_PARENT_ROUTER, deal_ack_connect_parent_router)
@@ -23,6 +28,8 @@ def init():
 
 
 def deal_ack_connect_parent_router(req: bytearray, *args) -> (bytearray, bool):
+    global _conn_num
+
     """dealAckConnectParentRouter 处理应答连接帧.返回值是应答数据和应答标志.应答标志为false表示不需要应答"""
     if len(req) == 0:
         lagan.warn(config.TAG, "deal conn failed.payload len is wrong:%d", len(req))
@@ -38,6 +45,7 @@ def deal_ack_connect_parent_router(req: bytearray, *args) -> (bytearray, bool):
         lagan.warn(config.TAG, "deal conn failed.payload len is wrong:%d", len(req))
         return None, False
 
+    _conn_num = 0
     apply.parent.is_conn = True
     apply.parent.cost = req[j]
     apply.parent.timestamp = int(time.time())
@@ -46,6 +54,8 @@ def deal_ack_connect_parent_router(req: bytearray, *args) -> (bytearray, bool):
 
 
 def _conn_thread():
+    global _conn_num
+
     while True:
         # 如果网络通道不开启则无需连接
         if not fpipe.pipe_is_allow_send(fpipe.PIPE_NET):
@@ -53,6 +63,12 @@ def _conn_thread():
             continue
 
         if apply.parent.ia != utz.IA_INVALID:
+            _conn_num += 1
+            if _conn_num > _CONN_NUM_MAX:
+                _conn_num = 0
+                apply.parent.ia = utz.IA_INVALID
+                lagan.warn(config.TAG, "conn num is too many!")
+                continue
             lagan.info(config.TAG, "send conn frame")
             _send_conn_frame()
 
