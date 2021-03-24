@@ -3,4 +3,4 @@ from tziot.fpipe import bind_pipe_net, bind_pipe
 from tziot.conn import is_conn
 from tziot.tziot import call, register
 
-__version__ = '1.1'
+__version__ = '1.2'

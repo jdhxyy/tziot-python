@@ -23,9 +23,8 @@ local_ia = 0
 local_pwd = ''
 
 # 核心网参数
-# todo
 core_ia = 0x2141000000000002
-core_ip = "192.168.1.119"
+core_ip = "115.28.86.119"
 core_port = 12914
 core_pipe = 0
 
