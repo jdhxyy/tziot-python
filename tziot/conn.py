@@ -4,8 +4,8 @@ Copyright 2021-2021 The jdh99 Authors. All rights reserved.
 Authors: jdh99 <jdh821@163.com>
 """
 
-import tziot.apply as apply
 import tziot.config as config
+import tziot.param as param
 import tziot.fpipe as fpipe
 import tziot.standardlayer as standardlayer
 
@@ -46,10 +46,10 @@ def deal_ack_connect_parent_router(req: bytearray, *args) -> (bytearray, bool):
         return None, False
 
     _conn_num = 0
-    apply.parent.is_conn = True
-    apply.parent.cost = req[j]
-    apply.parent.timestamp = int(time.time())
-    lagan.info(config.TAG, "conn success.parent ia:0x%x cost:%d", apply.parent.ia, apply.parent.cost)
+    param.parent.is_conn = True
+    param.parent.cost = req[j]
+    param.parent.timestamp = int(time.time())
+    lagan.info(config.TAG, "conn success.parent ia:0x%x cost:%d", param.parent.ia, param.parent.cost)
     return None, False
 
 
@@ -62,17 +62,17 @@ def _conn_thread():
             time.sleep(1)
             continue
 
-        if apply.parent.ia != utz.IA_INVALID:
+        if param.parent.ia != utz.IA_INVALID:
             _conn_num += 1
             if _conn_num > _CONN_NUM_MAX:
                 _conn_num = 0
-                apply.parent.ia = utz.IA_INVALID
+                param.parent.ia = utz.IA_INVALID
                 lagan.warn(config.TAG, "conn num is too many!")
                 continue
             lagan.info(config.TAG, "send conn frame")
             _send_conn_frame()
 
-        if apply.parent.ia == utz.IA_INVALID:
+        if param.parent.ia == utz.IA_INVALID:
             time.sleep(1)
         else:
             time.sleep(config.CONN_INTERVAL)
@@ -105,22 +105,22 @@ def _send_conn_frame():
     header.src_ia = config.local_ia
     header.dst_ia = config.core_ia
 
-    standardlayer.send(payload, header, apply.parent.pipe)
+    standardlayer.send(payload, header, param.parent.pipe)
 
 
 def _conn_timeout():
     while True:
-        if apply.parent.ia == utz.IA_INVALID or not apply.parent.is_conn:
+        if param.parent.ia == utz.IA_INVALID or not param.parent.is_conn:
             time.sleep(1)
             continue
 
-        if int(time.time()) - apply.parent.timestamp > config.CONN_TIMEOUT_MAX:
-            apply.parent.ia = utz.IA_INVALID
-            apply.parent.is_conn = False
+        if int(time.time()) - param.parent.timestamp > config.CONN_TIMEOUT_MAX:
+            param.parent.ia = utz.IA_INVALID
+            param.parent.is_conn = False
 
         time.sleep(1)
 
 
 def is_conn() -> bool:
     """是否连接核心网"""
-    return apply.parent.ia != utz.IA_INVALID and apply.parent.is_conn
+    return param.parent.ia != utz.IA_INVALID and param.parent.is_conn

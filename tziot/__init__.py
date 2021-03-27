@@ -1,6 +1,5 @@
 from tziot.config import config_core_param, config_dcom_param
-from tziot.fpipe import bind_pipe_net, bind_pipe
 from tziot.conn import is_conn
-from tziot.tziot import call, register
+from tziot.tziot import call, register, bind_pipe_net, bind_pipe
 
-__version__ = '1.3'
+__version__ = '1.5'

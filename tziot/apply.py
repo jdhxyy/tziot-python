@@ -5,6 +5,7 @@ Authors: jdh99 <jdh821@163.com>
 """
 
 import tziot.config as config
+import tziot.param as param
 import tziot.standardlayer as standardlayer
 import tziot.fpipe as fpipe
 import tziot.fdcom as fdcom
@@ -18,20 +19,6 @@ import threading
 import time
 
 
-class ParentInfo:
-    """父路由信息"""
-
-    def __init__(self):
-        self.ia = 0
-        self.pipe = 0
-        self.cost = 0
-        self.is_conn = False
-        self.timestamp = 0
-
-
-parent = ParentInfo()
-
-
 def init():
     knock.register(utz.HEADER_CMP, utz.CMP_MSG_TYPE_ASSIGN_SLAVE_ROUTER, deal_assign_slave_router)
     threading.Thread(target=_apply_thread).start()
@@ -39,8 +26,6 @@ def init():
 
 def deal_assign_slave_router(req: bytearray, *args) -> (bytearray, bool):
     """处理分配从机帧.返回值是应答数据和应答标志.应答标志为false表示不需要应答"""
-    global parent
-
     if len(req) == 0:
         lagan.warn(config.TAG, "deal apply failed.payload len is wrong:%d", len(req))
         return None, False
@@ -55,16 +40,16 @@ def deal_assign_slave_router(req: bytearray, *args) -> (bytearray, bool):
         lagan.warn(config.TAG, "deal apply failed.payload len is wrong:%d", len(req))
         return None, False
 
-    parent.ia = utz.bytes_to_ia(req[j:j + utz.IA_LEN])
+    param.parent.ia = utz.bytes_to_ia(req[j:j + utz.IA_LEN])
     j += utz.IA_LEN
 
     ip = socket.inet_ntoa(req[j:j + 4])
     j += 4
     port = (req[j] << 8) + req[j + 1]
     j += 2
-    parent.pipe = dcom.addr_to_pipe(ip, port)
+    param.parent.pipe = dcom.addr_to_pipe(ip, port)
 
-    lagan.info(config.TAG, "apply success.parent ia:0x%x ip:%s port:%d cost:%d", parent.ia, ip, port, req[j])
+    lagan.info(config.TAG, "apply success.parent ia:0x%x ip:%s port:%d cost:%d", param.parent.ia, ip, port, req[j])
     return None, False
 
 
@@ -75,7 +60,7 @@ def _apply_thread():
             time.sleep(1)
             continue
 
-        if fdcom.is_dcom_init and parent.ia == utz.IA_INVALID:
+        if fdcom.is_dcom_init and param.parent.ia == utz.IA_INVALID:
             lagan.info(config.TAG, "send apply frame")
             _send_apply_frame()
 
@@ -93,7 +78,7 @@ def _send_apply_frame():
 
     body = bytearray()
     body.append(utz.CMP_MSG_TYPE_REQUEST_SLAVE_ROUTER)
-    body += utz.ia_to_bytes(parent.ia)
+    body += utz.ia_to_bytes(param.parent.ia)
     body = utz.bytes_to_flp_frame(body, True, 0)
 
     payload += body

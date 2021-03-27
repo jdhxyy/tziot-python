@@ -13,7 +13,11 @@ import utzpy as utz
 _observers = list()
 
 
-def rx(pipe: int, data: bytearray):
+def init():
+    fpipe.register_rx_observer(_rx)
+
+
+def _rx(pipe: int, data: bytearray):
     """标准层接收"""
     header = _get_standard_header(data)
     if header is None:
