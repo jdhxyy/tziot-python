@@ -41,7 +41,7 @@ def register(rid: int, callback):
     """
     注册DCOM服务回调函数
     :param rid: 服务号
-    :param callback: 回调函数.格式: func(req bytearray) (bytearray, int)
+    :param callback: 回调函数.格式: func(pipe: int, src_ia: int, req: bytearray) -> (bytearray, int)
     :return: 返回值是应答和错误码.错误码为0表示回调成功,否则是错误码
     """
     dcom.register(config.PROTOCOL_NUM, rid, callback)
